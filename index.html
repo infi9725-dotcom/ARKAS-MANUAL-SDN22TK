@@ -1291,7 +1291,7 @@ function doPost(e) {
                 activities.splice(index, 1);
                 renderTable();
                 recalculateSummary();
-                showToast("Kegiatan dihapus & menyinkronkan ke Google Sheets...", "danger");
+                showToast("Kegiatan dihapus", "danger");
 
                 // OTOMATIS SINKRON KE GOOGLE SHEETS SETIAP KALI KEGIATAN DIHAPUS
                 syncToGoogleSheets(true);
