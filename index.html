@@ -73,8 +73,8 @@
                 <div class="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center mx-auto mb-3 shadow-lg p-2">
                     <img src="https://iili.io/By8FQ7s.png" alt="Logo ARKAS" class="w-full h-full object-contain filter drop-shadow">
                 </div>
-                <h2 class="font-bold text-xl tracking-tight">ARKAS BOS REGULER</h2>
-                <p class="text-xs text-blue-100 mt-1">Kementerian Pendidikan, Kebudayaan, Riset & Teknologi</p>
+                <h2 class="font-bold text-xl tracking-tight">ARKAS BOS</h2>
+                <p class="text-xs text-blue-100 mt-1">SDN 22 TANAH KERAS</p>
             </div>
 
             <!-- Login Form Body -->
@@ -113,7 +113,7 @@
                 </button>
 
                 <p class="text-[11px] text-center text-slate-400 pt-2 border-t border-slate-100">
-                    Aplikasi RKAS BOS Sekolah Dasar Negeri
+                    Aplikasi RKAS Manual
                 </p>
             </form>
         </div>
@@ -154,7 +154,7 @@
                     <img src="https://iili.io/By8FQ7s.png" alt="Logo ARKAS" class="w-full h-full object-contain">
                 </div>
                 <div>
-                    <h1 class="font-bold text-sm sm:text-base tracking-tight leading-tight">ARKAS BOS REGULER</h1>
+                    <h1 class="font-bold text-sm sm:text-base tracking-tight leading-tight">ARKAS MANUAL</h1>
                     <p class="text-[10px] text-blue-100 hidden sm:block">Aplikasi Rencana Kegiatan & Anggaran Sekolah</p>
                 </div>
             </div>
@@ -200,7 +200,7 @@
                 </button>
                 <button onclick="syncToGoogleSheets()" class="bg-kemdikbud-gold hover:bg-yellow-500 text-slate-900 text-xs px-2.5 py-1 rounded-md font-semibold transition flex items-center gap-1 shadow-sm">
                     <i class="fa-solid fa-floppy-disk text-[10px]"></i>
-                    <span class="hidden sm:inline text-[11px]">Simpan ke Sheets</span>
+                    <span class="hidden sm:inline text-[11px]">Simpan ke Database</span>
                 </button>
             </div>
         </div>
@@ -403,7 +403,7 @@
 
     <!-- Footer (Minimalist) -->
     <footer class="bg-white border-t border-slate-200 py-1.5 no-print text-center text-[10px] text-slate-500">
-        ARKAS BOS Reguler Integrasi Google Sheets &bull; SD/SMP/SMA Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi
+        SDN 22 TANAH KERAS
     </footer>
 
     <!-- MODAL 1: Tambah/Edit Kegiatan -->
@@ -1250,10 +1250,10 @@ function doPost(e) {
 
             if (index >= 0) {
                 activities[index] = item;
-                showToast("Kegiatan berhasil diperbarui & menyinkronkan ke Google Sheets...");
+                showToast("Kegiatan berhasil diperbaru");
             } else {
                 activities.push(item);
-                showToast("Kegiatan baru ditambahkan & menyinkronkan ke Google Sheets...");
+                showToast("Kegiatan baru ditambah");
             }
 
             closeActivityModal();
@@ -1367,7 +1367,7 @@ function doPost(e) {
             const badge = document.getElementById('gasConnectionStatus');
             if (gasUrl) {
                 badge.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-900/60 text-emerald-100 border border-emerald-400/30 mr-1 shadow-sm";
-                badge.innerHTML = `<span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400"></span> Terhubung (GAS)`;
+                badge.innerHTML = `<span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400"></span> Terhubung`;
             } else {
                 badge.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-900/60 text-blue-100 border border-blue-400/30 mr-1 shadow-sm";
                 badge.innerHTML = `<span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-amber-400"></span> Belum Terhubung`;
