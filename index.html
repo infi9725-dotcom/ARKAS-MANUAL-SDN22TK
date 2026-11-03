@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARKAS BOS Reguler - Rencana Kegiatan & Anggaran Sekolah</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        kemdikbud: {
+                            blue: '#005596',
+                            darkBlue: '#003A68',
+                            lightBlue: '#E6F0FA',
+                            gold: '#FFC72C'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; font-size: 12px; }
+            .shadow-md, .shadow-xl, .shadow-sm { box-shadow: none !important; }
+            .border { border-color: #cbd5e1 !important; }
+        }
+        /* Custom scrollbar for horizontal table scrolling */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Grid Lines for clearer table visualization */
+        table.table-arkas th, table.table-arkas td {
+            border-right: 1px solid #e2e8f0;
+        }
+        table.table-arkas th:last-child, table.table-arkas td:last-child {
+            border-right: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col antialiased overflow-hidden">
+
+    <!-- LOGIN OVERLAY MODAL -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all duration-300 scale-100">
+            <!-- Modal Header Branding -->
+            <div class="bg-gradient-to-r from-kemdikbud-darkBlue to-kemdikbud-blue p-6 text-white text-center relative">
+                <div class="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center mx-auto mb-3 shadow-lg p-2">
+                    <img src="https://iili.io/By8FQ7s.png" alt="Logo ARKAS" class="w-full h-full object-contain filter drop-shadow">
+                </div>
+                <h2 class="font-bold text-xl tracking-tight">ARKAS BOS REGULER</h2>
+                <p class="text-xs text-blue-100 mt-1">Kementerian Pendidikan, Kebudayaan, Riset & Teknologi</p>
+            </div>
+
+            <!-- Login Form Body -->
+            <form id="loginForm" onsubmit="handleLogin(event)" class="p-6 space-y-4">
+                <div id="loginErrorMessage" class="hidden bg-rose-50 border border-rose-200 text-rose-700 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-rose-500 text-sm"></i>
+                    <span id="loginErrorText">Username atau Sandi salah!</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Nama pengguna / Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </span>
+                        <input type="text" id="loginUsername" required placeholder="Masukkan Username..." class="w-full pl-10 pr-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-kemdikbud-blue focus:border-kemdikbud-blue focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Kata Sandi / Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="loginPassword" required placeholder="Masukkan Sandi..." class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-kemdikbud-blue focus:border-kemdikbud-blue focus:outline-none transition">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-eye text-xs" id="passToggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-kemdikbud-blue hover:bg-kemdikbud-darkBlue text-white font-semibold text-sm rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                    <span>Masuk ke Aplikasi</span>
+                </button>
+
+                <p class="text-[11px] text-center text-slate-400 pt-2 border-t border-slate-100">
+                    Aplikasi RKAS BOS Sekolah Dasar Negeri
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- SINKRONISASI AUTO LOAD MODAL (SEPERTI GAMBAR) -->
+    <div id="syncLoadingOverlay" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-sm overflow-hidden p-8 text-center flex flex-col items-center transform transition-all duration-300 scale-100">
+            <!-- Circular Progress Counter -->
+            <div class="relative w-32 h-32 flex items-center justify-center my-2">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <!-- Background Circle Track -->
+                    <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
+                    <!-- Animated Progress Arc -->
+                    <circle id="syncProgressCircle" cx="50" cy="50" r="40" stroke="#005596" stroke-width="8" stroke-linecap="round" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2" class="transition-all duration-300 ease-out" />
+                </svg>
+                <div class="absolute flex flex-col items-center justify-center">
+                    <span id="syncProgressPercent" class="text-2xl font-bold text-slate-800 font-mono tracking-tight">0%</span>
+                </div>
+            </div>
+
+            <!-- Titles & Status Text -->
+            <h3 id="syncStatusTitle" class="font-bold text-slate-800 text-base sm:text-lg mt-3">Memuat Data ARKAS</h3>
+            <p id="syncStatusSubtext" class="text-xs text-slate-400 mt-1 font-medium">Menyinkronkan data ke aplikasi...</p>
+
+            <!-- Bottom Horizontal Progress Bar -->
+            <div class="w-full bg-slate-100 rounded-full h-2 mt-6 overflow-hidden relative">
+                <div id="syncProgressBar" class="bg-gradient-to-r from-blue-500 to-kemdikbud-blue h-full rounded-full transition-all duration-300 ease-out w-0"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Header Navigation (Compact Height) -->
+    <header class="bg-gradient-to-r from-kemdikbud-darkBlue to-kemdikbud-blue text-white shadow-md no-print flex-shrink-0 z-30">
+        <div class="max-w-7xl mx-auto px-3 sm:px-5 py-1.5 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-white/10 p-1 rounded-md shadow-inner flex items-center justify-center w-8 h-8 border border-white/20">
+                    <img src="https://iili.io/By8FQ7s.png" alt="Logo ARKAS" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm sm:text-base tracking-tight leading-tight">ARKAS BOS REGULER</h1>
+                    <p class="text-[10px] text-blue-100 hidden sm:block">Aplikasi Rencana Kegiatan & Anggaran Sekolah</p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center flex-wrap gap-1.5">
+                <!-- User Profile & Logout -->
+                <div id="userInfoHeader" class="hidden items-center gap-1.5 mr-2 pl-2 border-l border-blue-400/40">
+                    <span class="text-[10px] font-semibold text-amber-300 bg-blue-900/80 px-2 py-0.5 rounded border border-amber-400/30 flex items-center gap-1">
+                        <i class="fa-solid fa-user-circle"></i> <span id="headerUserName">SDN 22 TANAH KERAS</span>
+                    </span>
+                    <button onclick="handleLogout()" title="Keluar / Logout" class="bg-rose-600/80 hover:bg-rose-600 text-white text-xs px-2 py-1 rounded-md transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
+                    </button>
+                </div>
+
+                <!-- Status Integrasi terhubung/belum terhubung -->
+                <span id="gasConnectionStatus" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-900/60 text-blue-100 border border-blue-400/30 mr-1 shadow-sm">
+                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-amber-400"></span> Belum Terhubung
+                </span>
+
+                <!-- Tombol Hapus Local Storage -->
+                <button onclick="openClearDataModal()" title="Hapus Semua Data Terseimpan (Reset)" class="bg-rose-700/80 hover:bg-rose-800 text-white text-xs px-2 py-1 rounded-md border border-rose-400/40 transition flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-broom text-[10px]"></i>
+                    <span class="hidden sm:inline text-[11px]">Hapus Storage</span>
+                </button>
+
+                <!-- Tombol Fullscreen Ala CBT / Exam Browser -->
+                <button onclick="toggleFullscreen()" title="Ukuran Layar Penuh" class="bg-indigo-700/80 hover:bg-indigo-800 text-white text-xs px-2.5 py-1 rounded-md border border-indigo-400/40 transition flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-expand text-[10px]" id="fullscreenIcon"></i>
+                    <span class="hidden sm:inline text-[11px]">Layar Penuh</span>
+                </button>
+
+                <!-- Tombol Database Google Sheets -->
+                <a href="https://docs.google.com/spreadsheets/d/1AR6DVpZ9VwrkyhPpYTs8T48PJGEZQGEaDpjJFUqPUJk/edit?usp=sharing" target="_blank" title="Buka Database Google Sheets" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded-md border border-emerald-400/40 transition flex items-center gap-1 shadow-sm font-medium">
+                    <i class="fa-solid fa-table text-[10px]"></i>
+                    <span class="hidden sm:inline text-[11px]">Database</span>
+                </a>
+
+                <button onclick="syncFromGoogleSheets()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded-md transition flex items-center gap-1 shadow-sm font-medium">
+                    <i class="fa-solid fa-arrows-rotate text-[10px]" id="syncIcon"></i>
+                    <span class="hidden sm:inline text-[11px]">Tarik Data</span>
+                </button>
+                <button onclick="syncToGoogleSheets()" class="bg-kemdikbud-gold hover:bg-yellow-500 text-slate-900 text-xs px-2.5 py-1 rounded-md font-semibold transition flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-floppy-disk text-[10px]"></i>
+                    <span class="hidden sm:inline text-[11px]">Simpan ke Sheets</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container: Fixed Compact Top & Scrollable Table Body -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-5 py-1.5 flex-grow w-full flex flex-col h-[calc(100vh-40px)] overflow-hidden">
+
+        <!-- Fixed Section Top (Ultra Compact Single-Row Layout) -->
+        <div class="flex-shrink-0 space-y-1 mb-1.5">
+            <!-- Banner Settings & School Info (Single Line Compact with Grid Spacing) -->
+            <div class="bg-white rounded-md shadow-sm border border-slate-200 px-2.5 py-1.5 no-print">
+                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-[10px]">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 flex-grow max-w-full">
+                        <!-- Identitas Sekolah -->
+                        <div class="flex items-center gap-1.5 bg-slate-50/80 px-2 py-0.5 rounded border border-slate-200/60 min-w-0">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase whitespace-nowrap shrink-0"><i class="fa-solid fa-school text-blue-600 mr-0.5"></i> Sekolah:</label>
+                            <input type="text" id="schoolNameInput" value="SD NEGERI 01 MEKAR JAYA" onchange="updateSchoolInfo()" class="w-full text-[10px] font-bold text-slate-800 focus:border-kemdikbud-blue focus:outline-none py-0 bg-transparent truncate" title="Nama Sekolah">
+                        </div>
+
+                        <!-- NPSN & Kabupaten -->
+                        <div class="flex items-center gap-1.5 bg-slate-50/80 px-2 py-0.5 rounded border border-slate-200/60 min-w-0">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase whitespace-nowrap shrink-0">NPSN/Kab:</label>
+                            <input type="text" id="schoolNpsnInput" value="10293847 - Kab. Bandung" onchange="updateSchoolInfo()" class="w-full text-[10px] font-semibold text-slate-800 focus:border-kemdikbud-blue focus:outline-none py-0 bg-transparent truncate" title="NPSN & Kabupaten">
+                        </div>
+
+                        <!-- Kepsek & NIP -->
+                        <div class="flex items-center gap-1 bg-slate-50/80 px-2 py-0.5 rounded border border-slate-200/60 min-w-0">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase whitespace-nowrap shrink-0"><i class="fa-solid fa-user-tie text-indigo-600 mr-0.5"></i> Kepsek:</label>
+                            <input type="text" id="headmasterNameInput" value="Drs. H. Ahmad Dahlan, M.Pd" placeholder="Nama Kepsek" onchange="updateSchoolInfo()" class="w-1/2 text-[10px] font-semibold text-slate-800 focus:border-kemdikbud-blue focus:outline-none py-0 bg-transparent truncate" title="Nama Kepala Sekolah">
+                            <span class="text-slate-300 shrink-0">/</span>
+                            <input type="text" id="headmasterNipInput" value="196805121993031004" placeholder="NIP Kepsek" onchange="updateSchoolInfo()" class="w-1/2 text-[9px] text-slate-600 focus:border-kemdikbud-blue focus:outline-none py-0 bg-transparent font-mono truncate" title="NIP Kepala Sekolah">
+                        </div>
+
+                        <!-- Bendahara & NIP -->
+                        <div class="flex items-center gap-1 bg-slate-50/80 px-2 py-0.5 rounded border border-slate-200/60 min-w-0">
+                            <label class="text-[9px] font-bold text-slate-500 uppercase whitespace-nowrap shrink-0"><i class="fa-solid fa-user-check text-emerald-600 mr-0.5"></i> Bendahara:</label>
+                            <input type="text" id="treasurerNameInput" value="Siti Nurhaliza, S.Pd" placeholder="Nama Bendahara" onchange="updateSchoolInfo()" class="w-1/2 text-[10px] font-semibold text-slate-800 focus:border-kemdikbud-blue focus:outline-none py-0 bg-transparent truncate" title="Nama Bendahara BOS">
+                            <span class="text-slate-300 shrink-0">/</span>
+                            <input type="text" id="treasurerNipInput" value="198402182009022001" placeholder="NIP Bendahara" onchange="updateSchoolInfo()" class="w-1/2 text-[9px] text-slate-600 focus:border-kemdikbud-blue focus:outline-none py-0 bg-transparent font-mono truncate" title="NIP Bendahara BOS">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Micro Summary Cards Strip -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+                <!-- Jumlah Siswa Card -->
+                <div class="bg-white rounded border border-slate-200 px-2 py-0.5 flex items-center justify-between">
+                    <div>
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-tight">Jml Siswa</span>
+                        <div class="flex items-baseline">
+                            <input type="number" id="inputSiswa" value="250" min="0" onchange="recalculateSummary()" class="text-xs font-bold text-slate-800 border-b border-dashed border-slate-300 w-10 focus:outline-none focus:border-kemdikbud-blue py-0">
+                            <span class="ml-0.5 text-[9px] text-slate-500">Siswa</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-user-graduate text-kemdikbud-blue text-[10px] opacity-70"></i>
+                </div>
+
+                <!-- Tarif BOS per Siswa Card -->
+                <div class="bg-white rounded border border-slate-200 px-2 py-0.5 flex items-center justify-between">
+                    <div>
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-tight">Satuan BOS</span>
+                        <input type="number" id="inputTarifBos" value="900000" min="0" step="50000" onchange="recalculateSummary()" class="text-xs font-bold text-slate-800 border-b border-dashed border-slate-300 w-20 focus:outline-none focus:border-indigo-500 py-0">
+                    </div>
+                    <i class="fa-solid fa-hand-holding-dollar text-indigo-500 text-[10px] opacity-70"></i>
+                </div>
+
+                <!-- Total Pagu Anggaran Card -->
+                <div class="bg-white rounded border border-slate-200 px-2 py-0.5 flex items-center justify-between">
+                    <div>
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-tight">Total Pagu</span>
+                        <p class="text-xs font-bold text-emerald-600 leading-tight" id="cardTotalPagu">Rp 0</p>
+                    </div>
+                    <i class="fa-solid fa-wallet text-emerald-500 text-[10px] opacity-70"></i>
+                </div>
+
+                <!-- Total Dianggarkan Card -->
+                <div class="bg-white rounded border border-slate-200 px-2 py-0.5 flex items-center justify-between">
+                    <div>
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-tight">Dianggarkan</span>
+                        <p class="text-xs font-bold text-cyan-700 leading-tight" id="cardTotalDianggarkan">Rp 0</p>
+                    </div>
+                    <i class="fa-solid fa-file-invoice-dollar text-cyan-600 text-[10px] opacity-70"></i>
+                </div>
+
+                <!-- Sisa Pagu Anggaran Card -->
+                <div id="cardSisaContainer" class="bg-white rounded border border-slate-200 px-2 py-0.5 flex items-center justify-between col-span-2 sm:col-span-1">
+                    <div>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Sisa Pagu</span>
+                            <span id="cardSisaStatusText" class="text-[8px] font-bold text-emerald-600">Seimbang</span>
+                        </div>
+                        <p class="text-xs font-bold text-emerald-600 leading-tight" id="cardSisaPagu">Rp 0</p>
+                    </div>
+                    <div id="cardSisaIconBg">
+                        <i id="cardSisaIcon" class="fa-solid fa-scale-balanced text-emerald-500 text-[10px] opacity-70"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar & Filter Action Bar (Micro Height) -->
+            <div class="bg-white rounded border border-slate-200 px-2 py-1 no-print">
+                <div class="flex flex-wrap justify-between items-center gap-1.5">
+                    
+                    <!-- Search & Filters -->
+                    <div class="flex items-center gap-1.5 flex-grow">
+                        <div class="relative flex-grow max-w-xs">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass text-[9px]"></i>
+                            </span>
+                            <input type="text" id="searchInput" onkeyup="filterActivities()" placeholder="Cari kegiatan..." class="w-full pl-6 pr-2 py-0.5 border border-slate-300 rounded text-[11px] focus:ring-1 focus:ring-kemdikbud-blue focus:outline-none">
+                        </div>
+
+                        <select id="filterBulan" onchange="filterActivities()" class="border border-slate-300 rounded text-[11px] px-1.5 py-0.5 bg-white focus:ring-1 focus:ring-kemdikbud-blue focus:outline-none">
+                            <option value="ALL">Semua Bulan (Jan - Des)</option>
+                            <option value="0">Januari</option>
+                            <option value="1">Februari</option>
+                            <option value="2">Maret</option>
+                            <option value="3">April</option>
+                            <option value="4">Mei</option>
+                            <option value="5">Juni</option>
+                            <option value="6">Juli</option>
+                            <option value="7">Agustus</option>
+                            <option value="8">September</option>
+                            <option value="9">Oktober</option>
+                            <option value="10">November</option>
+                            <option value="11">Desember</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-1">
+                        <button onclick="openActivityModal()" class="bg-kemdikbud-blue hover:bg-kemdikbud-darkBlue text-white text-[11px] font-medium px-2.5 py-0.5 rounded transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-plus text-[9px]"></i>
+                            <span>Tambah Kegiatan</span>
+                        </button>
+
+                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-3 py-0.5 rounded transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-file-excel text-[11px]"></i>
+                            <span>Download Excel</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Scroll Container (Ultra Expanded Area for High Visibility) -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 flex-grow overflow-hidden flex flex-col mb-1">
+            <div class="overflow-auto custom-scrollbar h-full relative">
+                <table class="w-full text-left text-xs border-collapse table-arkas min-w-[1400px]">
+                    <thead class="sticky top-0 z-20 bg-slate-100 shadow-sm">
+                        <tr class="border-b border-slate-300 text-slate-700 uppercase font-semibold text-[9px] tracking-wider">
+                            <th class="py-1.5 px-2 text-center w-8 sticky left-0 bg-slate-100 z-30 shadow-[1px_0_0_0_#cbd5e1]">No</th>
+                            <th class="py-1.5 px-3 min-w-[240px] bg-slate-100">Uraian Rencana Kegiatan</th>
+                            <th class="py-1.5 px-2 text-center min-w-[70px] bg-slate-100">Satuan</th>
+                            <th class="py-1.5 px-2 text-right min-w-[100px] bg-slate-100">Harga Satuan</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Jan (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Feb (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Mar (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Apr (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Mei (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Jun (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Jul (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Ags (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Sep (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Okt (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Nov (Rp)</th>
+                            <th class="py-1.5 px-2 text-right min-w-[110px] bg-slate-100">Des (Rp)</th>
+                            <th class="py-1.5 px-3 text-right min-w-[120px] bg-slate-200 font-bold">Total Rp</th>
+                            <th class="py-1.5 px-2 text-center min-w-[70px] bg-slate-100 no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityTableBody" class="divide-y divide-slate-200">
+                        <!-- Dynamic Content Rendered Here -->
+                    </tbody>
+                    <tfoot class="sticky bottom-0 z-20 font-bold text-slate-800 text-xs border-t-2 border-slate-300 bg-slate-100 shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
+                        <tr>
+                            <td class="py-1.5 px-3 text-right bg-slate-200/95" colspan="4">TOTAL ALOKASI PER BULAN:</td>
+                            <td id="footJan" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footFeb" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footMar" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footApr" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footMei" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footJun" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footJul" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footAgs" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footSep" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footOkt" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footNov" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footDes" class="py-1.5 px-2 text-right font-mono text-[10px] font-semibold text-slate-700 bg-slate-100">0</td>
+                            <td id="footGrandTotal" class="py-1.5 px-3 text-right font-bold font-mono text-kemdikbud-blue text-xs bg-slate-200">Rp 0</td>
+                            <td class="no-print bg-slate-100"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (Minimalist) -->
+    <footer class="bg-white border-t border-slate-200 py-1.5 no-print text-center text-[10px] text-slate-500">
+        ARKAS BOS Reguler Integrasi Google Sheets &bull; SD/SMP/SMA Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi
+    </footer>
+
+    <!-- MODAL 1: Tambah/Edit Kegiatan -->
+    <div id="activityModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden transform transition-all">
+            <div class="bg-kemdikbud-blue text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2" id="modalTitle">
+                    <i class="fa-solid fa-pen-to-square"></i> Tambah Kegiatan Baru
+                </h3>
+                <button onclick="closeActivityModal()" class="text-white/80 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="activityForm" onsubmit="saveActivity(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editIndex" value="-1">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Uraian Rencana Kegiatan / Keperluan</label>
+                    <input type="text" id="formNama" required placeholder="Contoh: Pembelian Kertas HVS A4 80gr" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-kemdikbud-blue focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Satuan (Manual)</label>
+                        <input type="text" id="formSatuan" required placeholder="Contoh: Rim, Paket, OB, Unit" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-kemdikbud-blue focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Harga Satuan (Rp)</label>
+                        <input type="number" id="formHarga" required min="0" step="100" placeholder="55000" oninput="calculateModalTotal()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-kemdikbud-blue focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Total Anggaran Item</label>
+                        <div id="modalCalculatedTotal" class="px-3 py-2 bg-slate-100 rounded-lg text-sm font-bold text-slate-700 border border-slate-200">
+                            Rp 0
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-2">Alokasi Volume / Kuantitas per Bulan</label>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Jan</span>
+                            <input type="number" min="0" value="0" id="m0" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Feb</span>
+                            <input type="number" min="0" value="0" id="m1" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Mar</span>
+                            <input type="number" min="0" value="0" id="m2" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Apr</span>
+                            <input type="number" min="0" value="0" id="m3" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Mei</span>
+                            <input type="number" min="0" value="0" id="m4" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Jun</span>
+                            <input type="number" min="0" value="0" id="m5" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Jul</span>
+                            <input type="number" min="0" value="0" id="m6" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Ags</span>
+                            <input type="number" min="0" value="0" id="m7" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Sep</span>
+                            <input type="number" min="0" value="0" id="m8" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Okt</span>
+                            <input type="number" min="0" value="0" id="m9" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Nov</span>
+                            <input type="number" min="0" value="0" id="m10" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold text-center mb-1">Des</span>
+                            <input type="number" min="0" value="0" id="m11" oninput="calculateModalTotal()" class="month-input w-full text-center px-1 py-1 border border-slate-300 rounded text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeActivityModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 font-medium hover:bg-slate-100 transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-kemdikbud-blue text-white rounded-lg text-sm font-semibold hover:bg-kemdikbud-darkBlue transition shadow-md">Simpan Kegiatan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Pengaturan Google Apps Script (GAS) -->
+    <div id="configModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
+            <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> Pengaturan Integrasi Google Sheets
+                </h3>
+                <button onclick="closeConfigModal()" class="text-white/80 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs sm:text-sm">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Web App URL Google Apps Script</label>
+                    <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-kemdikbud-blue focus:outline-none">
+                    <p class="text-[11px] text-slate-500 mt-1">Masukkan URL Web App yang dideploy dari Apps Script sekolah Anda.</p>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                    <p class="font-semibold text-slate-700">Kode Google Apps Script (GAS) Reference:</p>
+                    <p class="text-[11px] text-slate-600">Salin kode berikut ke Apps Script (Menu <b>Ekstensi > Apps Script</b>) di Google Spreadsheet Anda. Kode ini akan otomatis membuat header, format rupiah, dan tanda tangan:</p>
+                    <pre class="bg-slate-900 text-emerald-400 p-2.5 rounded text-[10px] overflow-x-auto font-mono selection:bg-slate-700">
+// =========================================================================
+// KODE GOOGLE APPS SCRIPT (GAS) - ARKAS BOS REGULER
+// =========================================================================
+
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("ARKAS_BOS") || ss.getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetName = "ARKAS_BOS";
+    var sheet = ss.getSheetByName(sheetName);
+    
+    // 1. Otomatis Buat Sheet Baru Jika Belum Ada
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+    }
+    
+    sheet.clear(); // Bersihkan data lama agar selalu terbarui presisi
+    
+    var payload = JSON.parse(e.postData.contents);
+    var activities = payload.activities || payload;
+    var meta = payload.meta || {};
+    
+    // 2. Tulis Header Identitas Sekolah & Ringkasan Pagu
+    sheet.getRange("A1").setValue("RENCANA KEGIATAN DAN ANGGARAN SEKOLAH (ARKAS) BOS REGULER").setFontWeight("bold").setFontSize(14);
+    sheet.getRange("A2").setValue("Nama Sekolah: " + (meta.schoolName || "SD NEGERI"));
+    sheet.getRange("D2").setValue("NPSN / Kab: " + (meta.npsn || "-"));
+    sheet.getRange("A3").setValue("Jumlah Siswa: " + (meta.siswa || 0) + " Siswa");
+    sheet.getRange("D3").setValue("Tarif BOS/Siswa: Rp " + (meta.tarif || 0));
+    sheet.getRange("G3").setValue("Total Pagu: Rp " + (meta.totalPagu || 0));
+
+    // 3. Tulis Header Judul Tabel Utama
+    var headers = ["NO", "URAIAN RENCANA KEGIATAN", "SATUAN", "HARGA SATUAN (RP)", "JAN (RP)", "FEB (RP)", "MAR (RP)", "APR (RP)", "MEI (RP)", "JUN (RP)", "JUL (RP)", "AGS (RP)", "SEP (RP)", "OKT (RP)", "NOV (RP)", "DES (RP)", "JUMLAH (RP)"];
+    sheet.getRange(5, 1, 1, headers.length).setValues([headers]);
+    
+    // Styling Header Tabel (Latar Biru Kemdikbud & Teks Putih)
+    var headerRange = sheet.getRange(5, 1, 1, headers.length);
+    headerRange.setBackground("#005596")
+               .setFontColor("#FFFFFF")
+               .setFontWeight("bold")
+               .setHorizontalAlignment("center")
+               .setVerticalAlignment("middle");
+    
+    // 4. Masukkan Data Baris Kegiatan
+    var startRow = 6;
+    if (activities && activities.length > 0) {
+      var rows = [];
+      for (var i = 0; i < activities.length; i++) {
+        var act = activities[i];
+        if (Array.isArray(act)) {
+          rows.push(act);
+        } else {
+          var bulanArr = act.bulan || new Array(12).fill(0);
+          var harga = act.harga || 0;
+          var row = [
+            i + 1,
+            act.nama,
+            act.satuan || '-',
+            harga
+          ];
+          var rowTotal = 0;
+          for (var m = 0; m < 12; m++) {
+            var cost = (bulanArr[m] || 0) * harga;
+            row.push(cost);
+            rowTotal += cost;
+          }
+          row.push(rowTotal);
+          rows.push(row);
+        }
+      }
+      
+      sheet.getRange(startRow, 1, rows.length, headers.length).setValues(rows);
+      
+      // Format Otomatis Mata Uang Rupiah (Kolom D s/d Q)
+      sheet.getRange(startRow, 4, rows.length, 14).setNumberFormat('"Rp "#,##0');
+      
+      // 5. Rumus Otomatis Total Alokasi Per Bulan (=SUM)
+      var totalRowIndex = startRow + rows.length;
+      sheet.getRange(totalRowIndex, 2).setValue("TOTAL ALOKASI PER BULAN").setFontWeight("bold");
+      
+      for (var col = 4; col <= 17; col++) {
+        var colLetter = String.fromCharCode(64 + col);
+        sheet.getRange(totalRowIndex, col).setFormula("=SUM(" + colLetter + startRow + ":" + colLetter + (totalRowIndex - 1) + ")")
+             .setFontWeight("bold")
+             .setNumberFormat('"Rp "#,##0');
+      }
+      
+      sheet.getRange(totalRowIndex, 1, 1, headers.length).setBackground("#E6F0FA");
+      
+      // 6. Otomatis Membuat Lembar Tanda Tangan (Kepala Sekolah & Bendahara)
+      var signRow = totalRowIndex + 3;
+      sheet.getRange(signRow, 2).setValue("Mengetahui,");
+      sheet.getRange(signRow, 14).setValue("Disetujui Oleh,");
+      sheet.getRange(signRow + 1, 2).setValue("Kepala Sekolah");
+      sheet.getRange(signRow + 1, 14).setValue("Bendahara BOS");
+      
+      sheet.getRange(signRow + 5, 2).setValue(meta.kepsekName || "-----------------").setFontWeight("bold");
+      sheet.getRange(signRow + 6, 2).setValue("NIP. " + (meta.kepsekNip || "-"));
+      
+      sheet.getRange(signRow + 5, 14).setValue(meta.bendaharaName || "-----------------").setFontWeight("bold");
+      sheet.getRange(signRow + 6, 14).setValue("NIP. " + (meta.bendaharaNip || "-"));
+    }
+
+    // Auto-fit ukuran kolom
+    for (var k = 1; k <= headers.length; k++) {
+      sheet.autoResizeColumn(k);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({status: "success", message: "Data ARKAS berhasil disinkronkan & Sheet dibuat!"}))
+                         .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({status: "error", message: err.toString()}))
+                         .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="saveGasConfig()" class="px-4 py-2 bg-kemdikbud-blue text-white rounded-lg text-sm font-medium hover:bg-kemdikbud-darkBlue transition">Simpan Konfigurasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: In-App Logout Confirmation -->
+    <div id="logoutConfirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden transform transition-all duration-300 scale-100">
+            <div class="bg-rose-600 text-white p-5 text-center relative">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full border border-white/30 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                    <i class="fa-solid fa-right-from-bracket text-2xl text-white"></i>
+                </div>
+                <h3 class="font-bold text-lg">Konfirmasi Keluar</h3>
+                <p class="text-xs text-rose-100 mt-0.5">Aplikasi ARKAS BOS Reguler</p>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-xs sm:text-sm text-slate-700 font-medium">Apakah Anda yakin ingin keluar dari aplikasi ini?</p>
+                <div class="flex items-center justify-center gap-3 mt-6">
+                    <button onclick="cancelLogout()" class="w-1/2 py-2 px-4 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition shadow-sm">
+                        Tidak
+                    </button>
+                    <button onclick="confirmLogout()" class="w-1/2 py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        Ya, Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: In-App Delete Activity Confirmation -->
+    <div id="deleteConfirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden transform transition-all duration-300 scale-100">
+            <input type="hidden" id="deleteTargetIndex" value="-1">
+            <div class="bg-rose-600 text-white p-5 text-center relative">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full border border-white/30 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                    <i class="fa-solid fa-trash-can text-2xl text-white"></i>
+                </div>
+                <h3 class="font-bold text-lg">Konfirmasi Hapus</h3>
+                <p class="text-xs text-rose-100 mt-0.5">Penghapusan Kegiatan ARKAS</p>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-xs sm:text-sm text-slate-700 font-medium">Apakah Anda yakin ingin menghapus kegiatan ini?</p>
+                <div class="mt-2.5 p-3 bg-rose-50 rounded-xl border border-rose-200">
+                    <p id="deleteActivityTargetName" class="font-bold text-xs text-rose-900 break-words">-</p>
+                </div>
+                <div class="flex items-center justify-center gap-3 mt-6">
+                    <button onclick="cancelDeleteActivity()" class="w-1/2 py-2 px-4 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition shadow-sm">
+                        Batal
+                    </button>
+                    <button onclick="confirmDeleteActivity()" class="w-1/2 py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                        Ya, Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: In-App Clear Local Storage Confirmation -->
+    <div id="clearDataConfirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden transform transition-all duration-300 scale-100">
+            <div class="bg-rose-600 text-white p-5 text-center relative">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full border border-white/30 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl text-white"></i>
+                </div>
+                <h3 class="font-bold text-lg">Hapus Storage (Reset)</h3>
+                <p class="text-xs text-rose-100 mt-0.5">Pembersihan Memori Lokal</p>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-xs sm:text-sm text-slate-700 font-medium">Apakah Anda yakin ingin menghapus seluruh data local storage?</p>
+                <p class="text-[11px] text-slate-500 mt-2 bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-amber-800">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Tindakan ini akan mengosongkan seluruh tabel kegiatan dan mengatur ulang data identitas sekolah di peramban ini.
+                </p>
+                
+                <div class="flex items-center justify-center gap-3 mt-5">
+                    <button onclick="closeClearDataModal()" class="w-1/2 py-2 px-4 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition shadow-sm">
+                        Batal
+                    </button>
+                    <button onclick="confirmClearLocalStorage()" class="w-1/2 py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                        Ya, Hapus Semua
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border border-slate-700">
+            <div id="toastIcon" class="text-emerald-400">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div id="toastMessage" class="text-xs sm:text-sm font-medium">Notifikasi</div>
+        </div>
+    </div>
+
+    <!-- Javascript Logic -->
+    <script>
+        // Default State Data kegiatan BOS (Kosong tanpa Data Dummy)
+        let activities = [];
+
+        // URL Google Apps Script yang terhubung secara otomatis (Terbaru)
+        const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbynGSC5s3JHP4bAQcpP5kOcpB5rstwVI5R4hg7TMfTYU2UAlWdT56Y9MEh9GuQDjnRm/exec';
+        let gasUrl = localStorage.getItem('ARKAS_GAS_URL') || DEFAULT_GAS_URL;
+
+        // Initialize Application on Load
+        window.onload = function() {
+            checkLoginSession();
+            loadLocalStorageData();
+            renderTable();
+            recalculateSummary();
+            checkGasUrlStatus();
+
+            // OTOMATIS LAYAR PENUH PADA INTERAKSI PERTAMA (DEPLOYMENT / STANDALONE MODE)
+            // Mengaktifkan fullscreen secara otomatis begitu pengguna melakukan klik/tap pertama di mana saja
+            const enableAutoFullscreen = function() {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    enterFullscreenMode(false);
+                }
+                // Hapus event listener setelah interaksi pertama berhasil
+                document.removeEventListener('click', enableAutoFullscreen);
+                document.removeEventListener('touchstart', enableAutoFullscreen);
+            };
+
+            document.addEventListener('click', enableAutoFullscreen, { once: true });
+            document.addEventListener('touchstart', enableAutoFullscreen, { once: true });
+        };
+
+        // FULLSCREEN EXAM BROWSER MODE LOGIC (WITH SAFE ERROR HANDLING)
+        function enterFullscreenMode(showToastNotice = false) {
+            try {
+                const elem = document.documentElement;
+                let promise = null;
+                if (elem.requestFullscreen) {
+                    promise = elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    promise = elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    promise = elem.msRequestFullscreen();
+                }
+
+                if (promise && promise.catch) {
+                    promise.catch(err => {
+                        console.warn("Fullscreen diblokir kebijakan izin browser/iframe:", err);
+                        if (showToastNotice) showToast("Layar Penuh tidak diizinkan oleh bingkai browser", "warning");
+                    });
+                }
+            } catch (err) {
+                console.warn("Fullscreen permission error:", err);
+                if (showToastNotice) showToast("Layar Penuh tidak diizinkan di jendela ini", "warning");
+            }
+        }
+
+        function exitFullscreenMode() {
+            try {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().catch(err => console.warn(err));
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            } catch (err) {
+                console.warn("Exit Fullscreen error:", err);
+            }
+        }
+
+        function toggleFullscreen() {
+            const icon = document.getElementById('fullscreenIcon');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                enterFullscreenMode(true);
+                if (icon) icon.className = "fa-solid fa-compress text-[10px]";
+            } else {
+                exitFullscreenMode();
+                if (icon) icon.className = "fa-solid fa-expand text-[10px]";
+                showToast("Mode Layar Penuh Dimatikan", "warning");
+            }
+        }
+
+        // LOGIN SYSTEM FUNCTIONS
+        function checkLoginSession() {
+            const loggedInUser = sessionStorage.getItem('ARKAS_LOGGED_USER');
+            const overlay = document.getElementById('loginOverlay');
+            const userInfoHeader = document.getElementById('userInfoHeader');
+
+            if (loggedInUser) {
+                overlay.classList.add('hidden');
+                userInfoHeader.classList.remove('hidden');
+                userInfoHeader.classList.add('flex');
+                document.getElementById('headerUserName').innerText = loggedInUser;
+            } else {
+                overlay.classList.remove('hidden');
+                userInfoHeader.classList.add('hidden');
+                userInfoHeader.classList.remove('flex');
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            // Coba aktifkan fullscreen secara aman tanpa menghentikan proses login jika diblokir
+            enterFullscreenMode(false);
+
+            const usernameInput = document.getElementById('loginUsername').value.trim();
+            const passwordInput = document.getElementById('loginPassword').value.trim();
+            const errorBox = document.getElementById('loginErrorMessage');
+
+            // Credentials check
+            if (usernameInput.toUpperCase() === "SDN 22 TANAH KERAS" && passwordInput === "10301884") {
+                sessionStorage.setItem('ARKAS_LOGGED_USER', "SDN 22 TANAH KERAS");
+                
+                // Automatically set school name input
+                document.getElementById('schoolNameInput').value = "SDN 22 TANAH KERAS";
+                saveToLocalStorage();
+
+                errorBox.classList.add('hidden');
+                
+                // SEMBUNYIKAN OVERLAY LOGIN DAN TAMPILKAN MODAL LOADING ANIMASI SINKRONISASI
+                document.getElementById('loginOverlay').classList.add('hidden');
+                startAutoSyncOnLogin();
+            } else {
+                errorBox.classList.remove('hidden');
+                document.getElementById('loginErrorText').innerText = "Username atau Sandi tidak sesuai!";
+            }
+        }
+
+        // FUNGSI ANIMASI LOADING SINKRONISASI DARI GOOGLE SHEETS
+        async function startAutoSyncOnLogin() {
+            const syncOverlay = document.getElementById('syncLoadingOverlay');
+            const percentText = document.getElementById('syncProgressPercent');
+            const progressCircle = document.getElementById('syncProgressCircle');
+            const progressBar = document.getElementById('syncProgressBar');
+            const statusTitle = document.getElementById('syncStatusTitle');
+            const statusSubtext = document.getElementById('syncStatusSubtext');
+
+            if (syncOverlay) syncOverlay.classList.remove('hidden');
+
+            const setProgress = (percent, titleText, subText) => {
+                const clamped = Math.min(100, Math.max(0, percent));
+                if (percentText) percentText.innerText = `${Math.round(clamped)}%`;
+                if (progressBar) progressBar.style.width = `${clamped}%`;
+                if (progressCircle) {
+                    const circumference = 251.2;
+                    const offset = circumference - (clamped / 100) * circumference;
+                    progressCircle.style.strokeDashoffset = offset;
+                }
+                if (titleText && statusTitle) statusTitle.innerText = titleText;
+                if (subText && statusSubtext) statusSubtext.innerText = subText;
+            };
+
+            // Tahap 1: Memulai Koneksi (0% -> 35%)
+            setProgress(15, "Menghubungkan ke Google Sheets", "Memeriksa URL integrasi GAS...");
+            await new Promise(r => setTimeout(r, 400));
+
+            // Tahap 2: Menarik Data Real-time (35% -> 85%)
+            setProgress(45, "Memuat Data ARKAS", "Menyinkronkan data ke aplikasi...");
+            let syncSuccess = false;
+            
+            if (gasUrl) {
+                try {
+                    const response = await fetch(gasUrl);
+                    const result = await response.json();
+
+                    setProgress(80, "Memproses Data Kegiatan", "Menyusun tabel ARKAS & pagu...");
+                    await new Promise(r => setTimeout(r, 300));
+
+                    // Parse Data Metadata Sekolah (Termasuk Kepsek & Bendahara)
+                    parseMetaDataFromSync(result);
+
+                    if (result && typeof result === 'object' && !Array.isArray(result) && result.activities) {
+                        activities = result.activities || [];
+                        syncSuccess = true;
+                    } else if (Array.isArray(result) || (result && result.raw && Array.isArray(result.raw))) {
+                        const dataArray = Array.isArray(result) ? result : result.raw;
+                        const newActivities = [];
+                        for (let i = 5; i < dataArray.length; i++) {
+                            const row = dataArray[i];
+                            if (row[1] && row[1].toString().includes("TOTAL ALOKASI")) break;
+                            if (row.length >= 17 && row[1]) {
+                                const harga = parseFloat(row[3]) || 0;
+                                const bulanCost = row.slice(4, 16);
+                                const bulanVol = bulanCost.map(cost => harga > 0 ? (parseFloat(cost) || 0) / harga : 0);
+                                newActivities.push({
+                                    nama: row[1] || 'Kegiatan Tanpa Nama',
+                                    satuan: row[2] || '-',
+                                    harga: harga,
+                                    bulan: bulanVol
+                                });
+                            }
+                        }
+                        activities = newActivities;
+                        syncSuccess = true;
+                    }
+                } catch (err) {
+                    console.warn("Gagal otomatis menyinkronkan data dari GAS saat login:", err);
+                }
+            }
+
+            // Tahap 3: Selesai 100%
+            setProgress(100, "Sinkronisasi Selesai", "Membuka halaman utama ARKAS...");
+            saveToLocalStorage();
+            renderTable();
+            recalculateSummary();
+            checkLoginSession();
+
+            await new Promise(r => setTimeout(r, 600));
+            if (syncOverlay) syncOverlay.classList.add('hidden');
+
+            if (syncSuccess) {
+                showToast(`Data & Identitas Sekolah berhasil ditarik otomatis!`);
+            } else {
+                showToast("Berhasil login ke aplikasi ARKAS!");
+            }
+        }
+
+        function handleLogout() {
+            const modal = document.getElementById('logoutConfirmModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function cancelLogout() {
+            const modal = document.getElementById('logoutConfirmModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmLogout() {
+            const modal = document.getElementById('logoutConfirmModal');
+            if (modal) modal.classList.add('hidden');
+            sessionStorage.removeItem('ARKAS_LOGGED_USER');
+            checkLoginSession();
+            showToast("Anda telah keluar dari sistem.", "warning");
+        }
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('loginPassword');
+            const icon = document.getElementById('passToggleIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                passInput.type = 'password';
+                icon.className = 'fa-solid fa-eye text-xs';
+            }
+        }
+
+        // Save and Load Local Data
+        function saveToLocalStorage() {
+            localStorage.setItem('ARKAS_ACTIVITIES', JSON.stringify(activities));
+            localStorage.setItem('ARKAS_SISWA', document.getElementById('inputSiswa').value);
+            localStorage.setItem('ARKAS_TARIF', document.getElementById('inputTarifBos').value);
+            localStorage.setItem('ARKAS_SCHOOL_NAME', document.getElementById('schoolNameInput').value);
+            localStorage.setItem('ARKAS_SCHOOL_NPSN', document.getElementById('schoolNpsnInput').value);
+            localStorage.setItem('ARKAS_KEPSEK_NAME', document.getElementById('headmasterNameInput').value);
+            localStorage.setItem('ARKAS_KEPSEK_NIP', document.getElementById('headmasterNipInput').value);
+            localStorage.setItem('ARKAS_BENDAHARA_NAME', document.getElementById('treasurerNameInput').value);
+            localStorage.setItem('ARKAS_BENDAHARA_NIP', document.getElementById('treasurerNipInput').value);
+        }
+
+        function loadLocalStorageData() {
+            const savedData = localStorage.getItem('ARKAS_ACTIVITIES');
+            if (savedData) {
+                try { activities = JSON.parse(savedData); } catch (e) {}
+            }
+
+            const savedSiswa = localStorage.getItem('ARKAS_SISWA');
+            if (savedSiswa) document.getElementById('inputSiswa').value = savedSiswa;
+
+            const savedTarif = localStorage.getItem('ARKAS_TARIF');
+            if (savedTarif) document.getElementById('inputTarifBos').value = savedTarif;
+
+            const savedSchool = localStorage.getItem('ARKAS_SCHOOL_NAME');
+            if (savedSchool) document.getElementById('schoolNameInput').value = savedSchool;
+
+            const savedNpsn = localStorage.getItem('ARKAS_SCHOOL_NPSN');
+            if (savedNpsn) document.getElementById('schoolNpsnInput').value = savedNpsn;
+
+            const savedKepsekName = localStorage.getItem('ARKAS_KEPSEK_NAME');
+            if (savedKepsekName) document.getElementById('headmasterNameInput').value = savedKepsekName;
+
+            const savedKepsekNip = localStorage.getItem('ARKAS_KEPSEK_NIP');
+            if (savedKepsekNip) document.getElementById('headmasterNipInput').value = savedKepsekNip;
+
+            const savedBendaharaName = localStorage.getItem('ARKAS_BENDAHARA_NAME');
+            if (savedBendaharaName) document.getElementById('treasurerNameInput').value = savedBendaharaName;
+
+            const savedBendaharaNip = localStorage.getItem('ARKAS_BENDAHARA_NIP');
+            if (savedBendaharaNip) document.getElementById('treasurerNipInput').value = savedBendaharaNip;
+
+            // Selalu perbarui URL GAS ke tautan yang baru diberikan
+            localStorage.setItem('ARKAS_GAS_URL', DEFAULT_GAS_URL);
+            gasUrl = DEFAULT_GAS_URL;
+            document.getElementById('gasUrlInput').value = gasUrl;
+
+            updateSchoolInfo();
+        }
+
+        function updateSchoolInfo() {
+            saveToLocalStorage();
+        }
+
+        // Calculations & Rendering
+        function recalculateSummary() {
+            const jmlSiswa = parseFloat(document.getElementById('inputSiswa').value) || 0;
+            const tarifBos = parseFloat(document.getElementById('inputTarifBos').value) || 0;
+
+            const totalPagu = jmlSiswa * tarifBos;
+
+            let totalDianggarkan = 0;
+            activities.forEach(act => {
+                const totalVol = act.bulan.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+                totalDianggarkan += totalVol * act.harga;
+            });
+
+            const sisaPagu = totalPagu - totalDianggarkan;
+
+            // DOM Updates
+            document.getElementById('cardTotalPagu').innerText = formatRupiah(totalPagu);
+            document.getElementById('cardTotalDianggarkan').innerText = formatRupiah(totalDianggarkan);
+            
+            const cardSisaPagu = document.getElementById('cardSisaPagu');
+            const cardSisaContainer = document.getElementById('cardSisaContainer');
+            const cardSisaStatusText = document.getElementById('cardSisaStatusText');
+            const cardSisaIconBg = document.getElementById('cardSisaIconBg');
+
+            cardSisaPagu.innerText = formatRupiah(sisaPagu);
+
+            if (sisaPagu < 0) {
+                cardSisaPagu.className = "text-xs font-bold text-rose-600 animate-pulse";
+                if (cardSisaStatusText) {
+                    cardSisaStatusText.innerText = "Defisit / Melebihi Pagu!";
+                    cardSisaStatusText.className = "text-[8px] font-semibold text-rose-600 truncate";
+                }
+                if (cardSisaIconBg) cardSisaIconBg.className = "p-0.5 bg-rose-100 text-rose-600 rounded animate-bounce";
+                if (cardSisaContainer) {
+                    cardSisaContainer.classList.add('border-rose-400', 'bg-rose-50/50');
+                }
+
+                // PERINGATAN AUTOMATIS JIKA OVER-BUDGET
+                const selisihOver = Math.abs(sisaPagu);
+                showToast(`PERINGATAN: Total Anggaran Melebihi Pagu BOS sebesar ${formatRupiah(selisihOver)}! Silakan sesuaikan kembali kegiatan.`, "danger");
+            } else {
+                cardSisaPagu.className = "text-xs font-bold text-emerald-600";
+                if (cardSisaStatusText) {
+                    cardSisaStatusText.innerText = "Seimbang";
+                    cardSisaStatusText.className = "text-[8px] font-semibold text-emerald-600 truncate";
+                }
+                if (cardSisaIconBg) cardSisaIconBg.className = "p-0.5 bg-emerald-50 text-emerald-600 rounded";
+                if (cardSisaContainer) {
+                    cardSisaContainer.classList.remove('border-rose-400', 'bg-rose-50/50');
+                }
+            }
+
+            saveToLocalStorage();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('activityTableBody');
+            tbody.innerHTML = '';
+
+            const filterMonthIndex = document.getElementById('filterBulan').value;
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+
+            let monthlyTotals = new Array(12).fill(0);
+            let grandTotal = 0;
+
+            activities.forEach((act, idx) => {
+                // Filter search
+                if (searchQuery && !act.nama.toLowerCase().includes(searchQuery)) {
+                    return;
+                }
+
+                // Filter bulan (if specific month chosen and volume is 0)
+                if (filterMonthIndex !== 'ALL') {
+                    const mIdx = parseInt(filterMonthIndex);
+                    if ((act.bulan[mIdx] || 0) <= 0) return;
+                }
+
+                const totalVol = act.bulan.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+                const rowTotal = totalVol * act.harga;
+                grandTotal += rowTotal;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50/40 transition-colors odd:bg-white even:bg-slate-50/50";
+
+                let monthCells = '';
+                for (let i = 0; i < 12; i++) {
+                    const vol = act.bulan[i] || 0;
+                    const cellCost = vol * act.harga;
+                    monthlyTotals[i] += cellCost;
+
+                    const highlight = (filterMonthIndex !== 'ALL' && parseInt(filterMonthIndex) === i) ? 'bg-amber-100/70 font-bold text-amber-900' : '';
+                    monthCells += `<td class="py-2.5 px-3 text-right font-mono text-[11px] whitespace-nowrap ${highlight}">${cellCost > 0 ? formatRupiah(cellCost) : '<span class="text-slate-300">-</span>'}</td>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center text-slate-400 font-medium sticky left-0 bg-white group-hover:bg-blue-50/40 border-r border-slate-200">${idx + 1}</td>
+                    <td class="py-2.5 px-4 font-medium text-slate-800 leading-relaxed">${escapeHtml(act.nama)}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-600 font-medium bg-slate-50/40">${escapeHtml(act.satuan || '-')}</td>
+                    <td class="py-2.5 px-3 text-right font-mono text-slate-600 whitespace-nowrap">${formatRupiah(act.harga)}</td>
+                    ${monthCells}
+                    <td class="py-2.5 px-4 text-right font-bold font-mono text-slate-900 whitespace-nowrap bg-slate-100/50">${formatRupiah(rowTotal)}</td>
+                    <td class="py-2.5 px-3 text-center no-print whitespace-nowrap">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="openActivityModal(${idx})" title="Edit Kegiatan" class="p-1.5 text-slate-500 hover:text-kemdikbud-blue hover:bg-blue-100/60 rounded transition">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteActivity(${idx})" title="Hapus Kegiatan" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-100/60 rounded transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            // Update Footer Summaries
+            for (let i = 0; i < 12; i++) {
+                const footElem = document.getElementById(`foot${getMonthCode(i)}`);
+                if (footElem) {
+                    footElem.innerText = monthlyTotals[i] > 0 ? formatRupiah(monthlyTotals[i]) : '-';
+                }
+            }
+            document.getElementById('footGrandTotal').innerText = formatRupiah(grandTotal);
+        }
+
+        function filterActivities() {
+            renderTable();
+        }
+
+        // Modal Form Handlers
+        function openActivityModal(index = -1) {
+            const modal = document.getElementById('activityModal');
+            document.getElementById('editIndex').value = index;
+
+            if (index >= 0) {
+                document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Kegiatan`;
+                const act = activities[index];
+                document.getElementById('formNama').value = act.nama;
+                document.getElementById('formSatuan').value = act.satuan || '';
+                document.getElementById('formHarga').value = act.harga;
+                for (let i = 0; i < 12; i++) {
+                    document.getElementById(`m${i}`).value = act.bulan[i] || 0;
+                }
+            } else {
+                document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-plus"></i> Tambah Kegiatan Baru`;
+                document.getElementById('activityForm').reset();
+                document.getElementById('editIndex').value = -1;
+            }
+
+            calculateModalTotal();
+            modal.classList.remove('hidden');
+        }
+
+        function closeActivityModal() {
+            document.getElementById('activityModal').classList.add('hidden');
+        }
+
+        function calculateModalTotal() {
+            const hargaEl = document.getElementById('formHarga');
+            const satuanEl = document.getElementById('formSatuan');
+            const calculatedTotalEl = document.getElementById('modalCalculatedTotal');
+
+            const harga = hargaEl ? (parseFloat(hargaEl.value) || 0) : 0;
+            const satuan = satuanEl ? (satuanEl.value || 'unit') : 'unit';
+
+            let totalVol = 0;
+            for (let i = 0; i < 12; i++) {
+                const mInput = document.getElementById(`m${i}`);
+                if (mInput) {
+                    totalVol += parseFloat(mInput.value) || 0;
+                }
+            }
+
+            const total = totalVol * harga;
+            if (calculatedTotalEl) {
+                calculatedTotalEl.innerText = `${formatRupiah(total)} (${totalVol} ${satuan})`;
+            }
+        }
+
+        function saveActivity(event) {
+            event.preventDefault();
+            const index = parseInt(document.getElementById('editIndex').value);
+            const nama = document.getElementById('formNama').value.trim();
+            const satuan = document.getElementById('formSatuan').value.trim();
+            const harga = parseFloat(document.getElementById('formHarga').value) || 0;
+            
+            const bulan = [];
+            for (let i = 0; i < 12; i++) {
+                bulan.push(parseFloat(document.getElementById(`m${i}`).value) || 0);
+            }
+
+            const item = { nama, satuan, harga, bulan };
+
+            if (index >= 0) {
+                activities[index] = item;
+                showToast("Kegiatan berhasil diperbarui & menyinkronkan ke Google Sheets...");
+            } else {
+                activities.push(item);
+                showToast("Kegiatan baru ditambahkan & menyinkronkan ke Google Sheets...");
+            }
+
+            closeActivityModal();
+            renderTable();
+            recalculateSummary();
+
+            // OTOMATIS SINKRON KE GOOGLE SHEETS SETIAP KALI KEGIATAN DISIMPAN / DIEDIT
+            syncToGoogleSheets(true);
+        }
+
+        // IN-APP DELETE CONFIRMATION SYSTEM (NO BROWSER POPUP)
+        function deleteActivity(index) {
+            if (index >= 0 && index < activities.length) {
+                const targetIdxInput = document.getElementById('deleteTargetIndex');
+                const targetNameElem = document.getElementById('deleteActivityTargetName');
+                if (targetIdxInput) targetIdxInput.value = index;
+                if (targetNameElem) targetNameElem.innerText = activities[index].nama;
+                
+                const modal = document.getElementById('deleteConfirmModal');
+                if (modal) modal.classList.remove('hidden');
+            }
+        }
+
+        function cancelDeleteActivity() {
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) modal.classList.add('hidden');
+            const targetIdxInput = document.getElementById('deleteTargetIndex');
+            if (targetIdxInput) targetIdxInput.value = -1;
+        }
+
+        function confirmDeleteActivity() {
+            const targetIdxInput = document.getElementById('deleteTargetIndex');
+            const index = targetIdxInput ? parseInt(targetIdxInput.value) : -1;
+            if (index >= 0 && index < activities.length) {
+                activities.splice(index, 1);
+                renderTable();
+                recalculateSummary();
+                showToast("Kegiatan dihapus & menyinkronkan ke Google Sheets...", "danger");
+
+                // OTOMATIS SINKRON KE GOOGLE SHEETS SETIAP KALI KEGIATAN DIHAPUS
+                syncToGoogleSheets(true);
+            }
+            cancelDeleteActivity();
+        }
+
+        // CLEAR LOCAL STORAGE LOGIC
+        function openClearDataModal() {
+            const modal = document.getElementById('clearDataConfirmModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeClearDataModal() {
+            const modal = document.getElementById('clearDataConfirmModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmClearLocalStorage() {
+            // Hapus data aplikasi di localStorage
+            localStorage.removeItem('ARKAS_ACTIVITIES');
+            localStorage.removeItem('ARKAS_SISWA');
+            localStorage.removeItem('ARKAS_TARIF');
+            localStorage.removeItem('ARKAS_SCHOOL_NAME');
+            localStorage.removeItem('ARKAS_SCHOOL_NPSN');
+            localStorage.removeItem('ARKAS_KEPSEK_NAME');
+            localStorage.removeItem('ARKAS_KEPSEK_NIP');
+            localStorage.removeItem('ARKAS_BENDAHARA_NAME');
+            localStorage.removeItem('ARKAS_BENDAHARA_NIP');
+            localStorage.removeItem('ARKAS_GAS_URL');
+
+            // Reset state internal
+            activities = [];
+            gasUrl = '';
+
+            // Reset input UI ke nilai default awal
+            document.getElementById('inputSiswa').value = '0';
+            document.getElementById('inputTarifBos').value = '900000';
+            document.getElementById('schoolNameInput').value = 'SDN 22 TANAH KERAS';
+            document.getElementById('schoolNpsnInput').value = '-';
+            document.getElementById('headmasterNameInput').value = '-';
+            document.getElementById('headmasterNipInput').value = '-';
+            document.getElementById('treasurerNameInput').value = '-';
+            document.getElementById('treasurerNipInput').value = '-';
+            document.getElementById('gasUrlInput').value = '';
+
+            closeClearDataModal();
+            renderTable();
+            recalculateSummary();
+            checkGasUrlStatus();
+
+            showToast("Seluruh data local storage berhasil dihapus!", "danger");
+        }
+
+        // Google Apps Script Integration
+        function openConfigModal() {
+            document.getElementById('configModal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        function saveGasConfig() {
+            gasUrl = document.getElementById('gasUrlInput').value.trim();
+            localStorage.setItem('ARKAS_GAS_URL', gasUrl);
+            checkGasUrlStatus();
+            closeConfigModal();
+            showToast("Konfigurasi URL Google Apps Script disimpan.");
+        }
+
+        function checkGasUrlStatus() {
+            const badge = document.getElementById('gasConnectionStatus');
+            if (gasUrl) {
+                badge.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-900/60 text-emerald-100 border border-emerald-400/30 mr-1 shadow-sm";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400"></span> Terhubung (GAS)`;
+            } else {
+                badge.className = "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-900/60 text-blue-100 border border-blue-400/30 mr-1 shadow-sm";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-amber-400"></span> Belum Terhubung`;
+            }
+        }
+
+        async function syncToGoogleSheets(isAutoSync = false) {
+            if (!gasUrl) {
+                if (!isAutoSync) {
+                    showToast("Silakan atur URL Google Apps Script terlebih dahulu!", "warning");
+                    openConfigModal();
+                }
+                return;
+            }
+
+            const syncIcon = document.getElementById('syncIcon');
+            if (syncIcon) syncIcon.classList.add('animate-spin');
+
+            const schoolName = document.getElementById('schoolNameInput').value;
+            const npsn = document.getElementById('schoolNpsnInput').value;
+            const siswa = document.getElementById('inputSiswa').value;
+            const tarif = document.getElementById('inputTarifBos').value;
+            const kepsekName = document.getElementById('headmasterNameInput').value;
+            const kepsekNip = document.getElementById('headmasterNipInput').value;
+            const bendaharaName = document.getElementById('treasurerNameInput').value;
+            const bendaharaNip = document.getElementById('treasurerNipInput').value;
+
+            const payload = {
+                meta: {
+                    schoolName: schoolName,
+                    npsn: npsn,
+                    siswa: siswa,
+                    tarif: tarif,
+                    totalPagu: (parseFloat(siswa) || 0) * (parseFloat(tarif) || 0),
+                    kepsekName: kepsekName,
+                    kepsekNip: kepsekNip,
+                    bendaharaName: bendaharaName,
+                    bendaharaNip: bendaharaNip
+                },
+                activities: activities
+            };
+
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!isAutoSync) {
+                    showToast(result.message || "Data berhasil disimpan ke Google Sheets!");
+                }
+            } catch (err) {
+                console.error("Sync Error:", err);
+                if (!isAutoSync) {
+                    showToast("Gagal menyimpan ke Google Sheets!", "danger");
+                }
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // HELPER KHUSUS PENYUSUNAN & EKSTRAKSI METADATA SEKOLAH
+        function parseMetaDataFromSync(result) {
+            let meta = null;
+            let rawData = null;
+
+            if (result && typeof result === 'object' && !Array.isArray(result)) {
+                meta = result.meta || null;
+                rawData = result.raw || null;
+            } else if (Array.isArray(result)) {
+                rawData = result;
+            }
+
+            // 1. Ekstrak dari Objek Meta jika ada
+            if (meta) {
+                if (meta.siswa !== undefined && meta.siswa !== null && meta.siswa !== '') document.getElementById('inputSiswa').value = meta.siswa;
+                if (meta.tarif !== undefined && meta.tarif !== null && meta.tarif !== '') document.getElementById('inputTarifBos').value = meta.tarif;
+                if (meta.schoolName && meta.schoolName !== "SD NEGERI") document.getElementById('schoolNameInput').value = meta.schoolName;
+                if (meta.npsn && meta.npsn !== "-") document.getElementById('schoolNpsnInput').value = meta.npsn;
+                if (meta.kepsekName && meta.kepsekName !== "-----------------") document.getElementById('headmasterNameInput').value = meta.kepsekName;
+                if (meta.kepsekNip && meta.kepsekNip !== "-") document.getElementById('headmasterNipInput').value = meta.kepsekNip;
+                if (meta.bendaharaName && meta.bendaharaName !== "-----------------") document.getElementById('treasurerNameInput').value = meta.bendaharaName;
+                if (meta.bendaharaNip && meta.bendaharaNip !== "-") document.getElementById('treasurerNipInput').value = meta.bendaharaNip;
+            }
+
+            // 2. Ekstrak secara fleksibel dari array mentah sheet (Tanda Tangan & Header Baris Atas)
+            if (rawData && Array.isArray(rawData)) {
+                // Membaca identitas baris atas (Baris 2 & 3)
+                if (rawData.length >= 3) {
+                    const r1Str = (rawData[1] || []).join(" ");
+                    const r2Str = (rawData[2] || []).join(" ");
+                    
+                    // Nama Sekolah & NPSN
+                    rawData[1]?.forEach(cell => {
+                        const cellStr = cell ? cell.toString().trim() : '';
+                        if (cellStr.startsWith("Nama Sekolah:")) {
+                            const val = cellStr.replace("Nama Sekolah:", "").trim();
+                            if (val) document.getElementById('schoolNameInput').value = val;
+                        }
+                        if (cellStr.startsWith("NPSN / Kab:")) {
+                            const val = cellStr.replace("NPSN / Kab:", "").trim();
+                            if (val) document.getElementById('schoolNpsnInput').value = val;
+                        }
+                    });
+
+                    // Siswa & Tarif
+                    rawData[2]?.forEach(cell => {
+                        const cellStr = cell ? cell.toString().trim() : '';
+                        if (cellStr.startsWith("Jumlah Siswa:")) {
+                            const match = cellStr.match(/\d+/);
+                            if (match) document.getElementById('inputSiswa').value = match[0];
+                        }
+                        if (cellStr.startsWith("Tarif BOS/Siswa:")) {
+                            const clean = cellStr.replace(/[^0-9]/g, '');
+                            if (clean) document.getElementById('inputTarifBos').value = clean;
+                        }
+                    });
+                }
+
+                // Membaca Blok Tanda Tangan di bagian bawah sheet
+                let signRowFound = -1;
+                for (let i = 0; i < rawData.length; i++) {
+                    const row = rawData[i];
+                    if (!row || !Array.isArray(row)) continue;
+                    const rowText = row.join(" ");
+                    if (rowText.includes("Kepala Sekolah") || rowText.includes("Bendahara BOS")) {
+                        signRowFound = i;
+                        break;
+                    }
+                }
+
+                if (signRowFound !== -1) {
+                    // Memindai baris-baris di bawah judul Kepsek/Bendahara untuk menemukan Nama & NIP
+                    for (let r = signRowFound + 1; r < Math.min(rawData.length, signRowFound + 10); r++) {
+                        const row = rawData[r];
+                        if (!row || !Array.isArray(row)) continue;
+
+                        for (let c = 0; c < row.length; c++) {
+                            const val = row[c] ? row[c].toString().trim() : '';
+                            if (!val || val === "-----------------") continue;
+
+                            // Jika baris berisi NIP
+                            if (val.toUpperCase().startsWith("NIP")) {
+                                const cleanNip = val.replace(/NIP\.?\s*/i, "").trim();
+                                if (c < 8) {
+                                    // Sisi Kiri -> Kepsek
+                                    document.getElementById('headmasterNipInput').value = cleanNip;
+                                } else {
+                                    // Sisi Kanan -> Bendahara
+                                    document.getElementById('treasurerNipInput').value = cleanNip;
+                                }
+                            } 
+                            // Jika bukan kata kunci jabatan/NIP/mengetahui, maka dianggap Nama
+                            else if (!val.includes("Mengetahui") && !val.includes("Disetujui") && !val.includes("Kepala Sekolah") && !val.includes("Bendahara BOS")) {
+                                if (c < 8) {
+                                    document.getElementById('headmasterNameInput').value = val;
+                                } else {
+                                    document.getElementById('treasurerNameInput').value = val;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Simpan data terbaru ke LocalStorage agar konsisten
+            saveToLocalStorage();
+        }
+
+        async function syncFromGoogleSheets() {
+            if (!gasUrl) {
+                showToast("Silakan atur URL Google Apps Script terlebih dahulu!", "warning");
+                openConfigModal();
+                return;
+            }
+
+            const syncIcon = document.getElementById('syncIcon');
+            if (syncIcon) syncIcon.classList.add('animate-spin');
+
+            try {
+                const response = await fetch(gasUrl);
+                const result = await response.json();
+
+                // Ekstrak Metadata (Termasuk Nama Kepsek, NIP, Bendahara, NIP)
+                parseMetaDataFromSync(result);
+
+                // Ekstrak Daftar Kegiatan
+                if (result && typeof result === 'object' && !Array.isArray(result) && result.activities) {
+                    activities = result.activities || [];
+                } else if (Array.isArray(result) || (result && result.raw && Array.isArray(result.raw))) {
+                    const dataArray = Array.isArray(result) ? result : result.raw;
+                    const newActivities = [];
+                    for (let i = 5; i < dataArray.length; i++) {
+                        const row = dataArray[i];
+                        if (row[1] && row[1].toString().includes("TOTAL ALOKASI")) break;
+                        if (row.length >= 17 && row[1]) {
+                            const harga = parseFloat(row[3]) || 0;
+                            const bulanCost = row.slice(4, 16);
+                            const bulanVol = bulanCost.map(cost => harga > 0 ? (parseFloat(cost) || 0) / harga : 0);
+                            newActivities.push({
+                                nama: row[1] || 'Kegiatan Tanpa Nama',
+                                satuan: row[2] || '-',
+                                harga: harga,
+                                bulan: bulanVol
+                            });
+                        }
+                    }
+                    activities = newActivities;
+                }
+
+                saveToLocalStorage();
+                renderTable();
+                recalculateSummary();
+                showToast(`Data & Identitas Sekolah berhasil ditarik! (${activities.length} Kegiatan)`);
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal menarik data dari Google Sheets: " + err.message, "danger");
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // EXPORT TO STYLED EXCEL WITH SIGNATURE BLOCK (EXACT MATCH TO REFERENCE IMAGE)
+        function exportToExcel() {
+            // Ambil data identitas sekolah secara real-time langsung dari DOM atau LocalStorage
+            const schoolName = (document.getElementById('schoolNameInput')?.value || localStorage.getItem('ARKAS_SCHOOL_NAME') || 'SD NEGERI 01 MEKAR JAYA').toUpperCase();
+            const npsn = document.getElementById('schoolNpsnInput')?.value || localStorage.getItem('ARKAS_SCHOOL_NPSN') || '10293847 - Kab. Bandung';
+            
+            // Ambil Nama & NIP Kepsek dan Bendahara secara presisi
+            const kepsekName = document.getElementById('headmasterNameInput')?.value || localStorage.getItem('ARKAS_KEPSEK_NAME') || 'Drs. H. Ahmad Dahlan, M.Pd';
+            const kepsekNip = document.getElementById('headmasterNipInput')?.value || localStorage.getItem('ARKAS_KEPSEK_NIP') || '196805121993031004';
+            const bendaharaName = document.getElementById('treasurerNameInput')?.value || localStorage.getItem('ARKAS_BENDAHARA_NAME') || 'Siti Nurhaliza, S.Pd';
+            const bendaharaNip = document.getElementById('treasurerNipInput')?.value || localStorage.getItem('ARKAS_BENDAHARA_NIP') || '198402182009022001';
+
+            // Susun Struktur Baris Sesuai Gambar Referensi (Baris 1-3 Header Tengah, Baris 5 NPSN, Baris 7 Tabel)
+            const data = [
+                ["RENCANA KEGIATAN DAN ANGGARAN SEKOLAH (ARKAS)"], // Baris 1 (A1)
+                ["DANA BANTUAN OPERASIONAL SEKOLAH (BOS) REGULER"], // Baris 2 (A2)
+                [schoolName], // Baris 3 (A3)
+                [], // Baris 4 Kosong
+                [`NPSN / Kab-Kota: ${npsn}`], // Baris 5 (A5)
+                [] // Baris 6 Kosong
+            ];
+
+            // Baris 7: Header Tabel Utama
+            const headers = [
+                "NO", "URAIAN RENCANA KEGIATAN", "SATUAN", "HARGA SATUAN (RP)",
+                "JAN (RP)", "FEB (RP)", "MAR (RP)", "APR (RP)", "MEI (RP)", "JUN (RP)",
+                "JUL (RP)", "AGS (RP)", "SEP (RP)", "OKT (RP)", "NOV (RP)", "DES (RP)", "TOTAL JUMLAH (RP)"
+            ];
+            data.push(headers);
+
+            let monthlyTotals = new Array(12).fill(0);
+            let grandTotal = 0;
+
+            // Baris 8+: Data Kegiatan
+            activities.forEach((act, idx) => {
+                const row = [idx + 1, act.nama, act.satuan || '-', parseFloat(act.harga) || 0];
+                let rowTotal = 0;
+                for (let i = 0; i < 12; i++) {
+                    const cost = (parseFloat(act.bulan[i]) || 0) * (parseFloat(act.harga) || 0);
+                    row.push(cost);
+                    monthlyTotals[i] += cost;
+                    rowTotal += cost;
+                }
+                row.push(rowTotal);
+                grandTotal += rowTotal;
+                data.push(row);
+            });
+
+            // Baris Total Alokasi
+            const totalRow = [
+                "TOTAL ALOKASI PER BULAN:", "", "", "",
+                ...monthlyTotals,
+                grandTotal
+            ];
+            data.push(totalRow);
+
+            // Baris Tanda Tangan Presisi
+            data.push([]);
+            data.push([]);
+            data.push(["", "Mengetahui,", "", "", "", "", "", "", "", "", "", "", "", "", "Disetujui Oleh,", ""]);
+            data.push(["", "Kepala Sekolah", "", "", "", "", "", "", "", "", "", "", "", "", "Bendahara BOS", ""]);
+            data.push([]);
+            data.push([]);
+            data.push([]);
+            data.push(["", kepsekName, "", "", "", "", "", "", "", "", "", "", "", "", bendaharaName, ""]);
+            data.push(["", `NIP. ${kepsekNip}`, "", "", "", "", "", "", "", "", "", "", "", "", `NIP. ${bendaharaNip}`, ""]);
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // Penggabungan Sel (Merges) Sesuai Layout
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 16 } }, // Merge A1:Q1 (Judul ARKAS)
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 16 } }, // Merge A2:Q2 (DANA BOS)
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 16 } }, // Merge A3:Q3 (NAMA SEKOLAH)
+                { s: { r: 4, c: 0 }, e: { r: 4, c: 5 } },  // Merge A5:F5 (NPSN)
+                { s: { r: 6 + activities.length + 1, c: 0 }, e: { r: 6 + activities.length + 1, c: 2 } } // Merge Total Alokasi A:C
+            ];
+
+            // Tampilkan Gridlines di Excel
+            ws['!views'] = [{ showGridLines: true }];
+
+            const headerRowIndex = 6; // Baris ke-7 (0-indexed = 6)
+            const firstDataRowIndex = 7;
+            const lastDataRowIndex = firstDataRowIndex + activities.length - 1;
+            const totalRowIndex = lastDataRowIndex + 1;
+
+            // Apply Styling ke Sel Excel & Pastikan Seluruh Sel Berbingkai Garis Tabel (Borders)
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[cell_address]) {
+                        // Pastikan sel kosong di area tabel tetap memiliki border jika dalam jangkauan
+                        if (R >= headerRowIndex && R <= totalRowIndex) {
+                            ws[cell_address] = { t: 's', v: '' };
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    // 1. Judul Atas (Baris 1-3)
+                    if (R >= 0 && R <= 2) {
+                        ws[cell_address].s = {
+                            font: { bold: true, sz: R === 0 ? 14 : 11, name: "Calibri" },
+                            alignment: { horizontal: "center", vertical: "center" }
+                        };
+                    }
+                    // 2. Baris NPSN (Baris 5)
+                    else if (R === 4) {
+                        ws[cell_address].s = {
+                            font: { bold: true, sz: 10, name: "Calibri" },
+                            alignment: { horizontal: "left", vertical: "center" }
+                        };
+                    }
+                    // 3. Header Tabel (Baris 7 / R === 6) - Latar Biru Kemdikbud & Teks Putih
+                    else if (R === headerRowIndex) {
+                        ws[cell_address].s = {
+                            fill: { fgColor: { rgb: "003A68" } }, // Biru Gelap Kemdikbud
+                            font: { color: { rgb: "FFFFFF" }, bold: true, sz: 10, name: "Calibri" },
+                            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                            border: {
+                                top: { style: "medium", color: { rgb: "000000" } },
+                                bottom: { style: "medium", color: { rgb: "000000" } },
+                                left: { style: "thin", color: { rgb: "000000" } },
+                                right: { style: "thin", color: { rgb: "000000" } }
+                            }
+                        };
+                    }
+                    // 4. Data Kegiatan (Baris 8+) - Bergaris Tabel Rapi
+                    else if (R >= firstDataRowIndex && R <= lastDataRowIndex) {
+                        const isNumberCol = C >= 3;
+                        ws[cell_address].s = {
+                            font: { sz: 10, name: "Calibri" },
+                            alignment: {
+                                horizontal: C === 0 ? "center" : (C === 2 ? "center" : (isNumberCol ? "right" : "left")),
+                                vertical: "center",
+                                wrapText: C === 1 // Wrap Text untuk Uraian Kegiatan agar rapi melipat
+                            },
+                            border: {
+                                top: { style: "thin", color: { rgb: "000000" } },
+                                bottom: { style: "thin", color: { rgb: "000000" } },
+                                left: { style: "thin", color: { rgb: "000000" } },
+                                right: { style: "thin", color: { rgb: "000000" } }
+                            }
+                        };
+                        if (isNumberCol && typeof ws[cell_address].v === 'number') {
+                            ws[cell_address].z = '#,##0'; // Format Angka Rapi Tanpa Decimal
+                        }
+                    }
+                    // 5. Total Alokasi Per Bulan - Garis Tebal Bawah & Latar Abu-abu
+                    else if (R === totalRowIndex) {
+                        const isNumberCol = C >= 3;
+                        ws[cell_address].s = {
+                            fill: { fgColor: { rgb: "E2E8F0" } },
+                            font: { bold: true, sz: 10, name: "Calibri" },
+                            alignment: { horizontal: isNumberCol ? "right" : "left", vertical: "center" },
+                            border: {
+                                top: { style: "medium", color: { rgb: "000000" } },
+                                bottom: { style: "medium", color: { rgb: "000000" } },
+                                left: { style: "thin", color: { rgb: "000000" } },
+                                right: { style: "thin", color: { rgb: "000000" } }
+                            }
+                        };
+                        if (isNumberCol && typeof ws[cell_address].v === 'number') {
+                            ws[cell_address].z = '#,##0';
+                        }
+                    }
+                    // 6. Styling Tanda Tangan Presisi
+                    else if (R > totalRowIndex + 2) {
+                        ws[cell_address].s = {
+                            font: { sz: 10, bold: R === totalRowIndex + 8, name: "Calibri" },
+                            alignment: { horizontal: "center", vertical: "center" }
+                        };
+                    }
+                }
+            }
+
+            // Setting Lebar Kolom Presisi Agar Otomatis Rapi Tanpa Perlu Edit Manual
+            ws['!cols'] = [
+                { wch: 6 },   // A: NO
+                { wch: 45 },  // B: URAIAN RENCANA KEGIATAN (Lebar Rapi & Wrap Text)
+                { wch: 12 },  // C: SATUAN
+                { wch: 18 },  // D: HARGA SATUAN
+                { wch: 14 },  // E: JAN
+                { wch: 14 },  // F: FEB
+                { wch: 14 },  // G: MAR
+                { wch: 14 },  // H: APR
+                { wch: 14 },  // I: MEI
+                { wch: 14 },  // J: JUN
+                { wch: 14 },  // K: JUL
+                { wch: 14 },  // L: AGS
+                { wch: 14 },  // M: SEP
+                { wch: 14 },  // N: OKT
+                { wch: 14 },  // O: NOV
+                { wch: 14 },  // P: DES
+                { wch: 20 }   // Q: TOTAL JUMLAH
+            ];
+
+            // Buat Workbook & Unduh File Excel
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ARKAS BOS");
+
+            const cleanSchoolName = schoolName.replace(/[^a-zA-Z0-9_-]/g, '_');
+            XLSX.writeFile(wb, `ARKAS_BOS_${cleanSchoolName}.xlsx`);
+            showToast("File Excel rapi dengan tabel & header biru berhasil diunduh!");
+        }
+
+        // Helper Utilities
+        function getMonthCode(index) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            return months[index] || 'Jan';
+        }
+
+        function formatRupiah(number) {
+            const num = parseFloat(number) || 0;
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }).format(num).replace('Rp', 'Rp ');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            if (!toast || !toastMessage || !toastIcon) return;
+
+            toastMessage.innerText = message;
+
+            if (type === 'danger') {
+                toastIcon.className = 'text-rose-400';
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            } else if (type === 'warning') {
+                toastIcon.className = 'text-amber-400';
+                toastIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                toastIcon.className = 'text-emerald-400';
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
